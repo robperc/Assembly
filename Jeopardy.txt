@@ -1,0 +1,150 @@
+; Jeopardy
+; R.Percival, H. Lively-Cookson, B037, 11May13
+	processor 16F84A
+	INCLUDE "P16F84A.INC"
+	__CONFIG _CP_OFF & _WDT_OFF & _XT_OSC & _PWRTE_ON
+	
+
+	LEDPORT	Equ	PORTA			;set constant LEDPORT = 'PORTA'
+	SWPORT	Equ	PORTA			;set constant SWPORT = 'PORTA'
+	LEDTRIS	Equ	TRISA			;set constant for TRIS register
+	DISPPORT Equ    PORTB		;set constant DISPPORT = 'PORTB'
+    DISPTRIS Equ    TRISB		;set constant for TRIS register
+
+	RDY     Equ	4
+	SW1		Equ	3			;set constants for the switches
+	SW2		Equ	2
+	LED1	Equ	1			;and for the LED's
+	LED2	Equ	0
+   	
+
+	org H'00'
+   	bsf 	STATUS,		RP0	;select bank 1
+   	movlw 	H'EC'			;set PortA 4 inputs, 4 outputs
+   	movwf 	LEDTRIS
+	bcf	STATUS,		RP0	;select bank 0
+	clrf	LEDPORT			;set all outputs low
+   	
+	bsf 	STATUS,		RP0	;select bank 1
+   	movlw 	H'00'			;set PortB 8 outputs
+   	movwf 	DISPTRIS
+	bcf	STATUS,		RP0	;select bank 0
+	clrf	DISPPORT		;set all outputs low
+
+	call count
+
+count movlw H'09' 	; load w to display 9
+	movwf DISPPORT  ; move w to port b output
+	call secDelay   ; start one second delay
+	movlw H'08' 	; load w to display 8
+	movwf DISPPORT  ; move w to port b output
+	call secDelay   ; start one second delay
+	movlw H'07' 	; load w to display 7
+	movwf DISPPORT  ; move w to port b output
+	call secDelay   ; start one second delay
+	movlw H'06' 	; load w to display 6
+	movwf DISPPORT  ; move w to port b output
+	call secDelay   ; start one second delay
+	movlw H'05' 	; load w to display 5
+	movwf DISPPORT  ; move w to port b output
+	call secDelay   ; start one second delay
+	movlw H'04' 	; load w to display 4
+	movwf DISPPORT  ; move w to port b output
+	call secDelay   ; start one second delay
+	movlw H'03'     ; load w to display 3
+	movwf DISPPORT  ; move w to port b output
+	call secDelay   ; start one second delay
+	movlw H'02' 	; load w to display 2
+	movwf DISPPORT  ; move w to port b output
+	call secDelay   ; start one second delay
+	movlw H'01'     ; load w to display 1
+	movwf DISPPORT  ; move w to port b output
+	call secDelay   ; start one second delay
+	movlw H'00'     ; load w to display 0
+	movwf DISPPORT  ; move w to port b output
+winWait call winCheck	; wait for a player to hit their switch
+	goto winWait	; if a player doesn't hit their switch then continue to wait
+
+
+pause   movlw H'FF' ; move 255 to w
+	movwf H'0E' ; move w to location 0E
+	return      ; exit subroutine
+
+loadN   movlw H'FF' ; move 255 to w
+	movwf H'0D' ; move w to location 0D
+	return      ; exit subroutine
+
+decN    decfsz H'0D', 1 ; decrement location 0D
+	goto decN       ; if ’0D’ ne 0 then loop
+	decfsz H'0E', 1 ; else decrement ’0E’
+	goto decN       ; if ’0E’ ne 0 then loop
+	goto pause      ; reload value of delay1
+	goto loadN      ; reload value of delay2
+	return          ; exit subroutine
+
+delay call check ;checks to see if a player has cheated
+	decfsz H'0D', 1 ; decrement location 0D
+	goto delay      ; if ’0D’ ne 0 then loop
+	call check ; checks to see if a player has cheated
+	decfsz H'0E', 1 ; else decrement ’0E’
+	goto delay       ; if ’0E’ ne 0 then loop
+	goto pause      ; reload value of delay1
+	goto loadN      ; reload value of delay2
+	return          ; exit subroutine
+
+secDelay call delay ; delays a full second
+		 call delay
+         return
+
+check   btfss  	SWPORT,	SW1 ; If SW1 is set then skip next line
+	call	cheat1     ; Else, turn on LED1
+	btfss	SWPORT,	SW2 ; If SW2 is set then skip next line                 
+	call	cheat2	    ; Else, turn on LED2					  
+	return              ; exit subroutine
+
+winCheck btfss  SWPORT,	SW1 ; If SW1 is set then skip next line
+	call	switch1     ; Else, turn on LED1
+	btfss	SWPORT,	SW2 ; If SW2 is set then skip next line                   
+	call	switch2	    ; Else, turn on LED2					 
+	return              ; exit subroutine
+
+switch1	bsf	SWPORT,	LED1		; turn LED1 on
+	movlw H'01'     		; load w to display 1
+	movwf DISPPORT  		; move w to port b output
+	goto endLoop
+
+switch2 bsf	 SWPORT,	LED2		; turn LED2 on    
+	movlw H'02' 				; load w to display 2
+	movwf DISPPORT  			; move w to port b output          
+	goto endLoop                     
+
+cheat1  bsf	SWPORT,	LED2	; turn LED2 on
+	movlw H'02' 			; load w to display 2
+	movwf DISPPORT  		; move w to port b output
+	call blink1				; blink LED1
+
+cheat2  bsf	SWPORT,	LED1		; turn LED1 on
+	movlw H'01'    	 		; load w to display 1
+	movwf DISPPORT  		; move w to port b output
+	call blink2			; blink LED2
+
+blink1  call decN 			; Rapidly blinks LED1
+	call decN                       ; Called when player 1
+	bsf	SWPORT,	LED1		; is caught cheating
+    call decN
+	call decN
+	bcf	SWPORT,	LED1		
+	goto blink1       
+
+blink2  call decN 			; Rapidly blinks LED2
+	call decN                       ; Called when player 2
+	bsf	SWPORT,	LED2		; is caught cheating
+    call decN
+	call decN
+	bcf	SWPORT,	LED2		
+	goto blink2                  
+
+endLoop goto endLoop                    ; loops until MCLR is reset
+
+
+	end

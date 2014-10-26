@@ -1,0 +1,56 @@
+; LED follow
+; R.Percival, B037, 05May13
+	processor 16F84A
+	INCLUDE "p16f84A.inc"
+	__CONFIG _CP_OFF & _WDT_OFF & _XT_OSC & _PWRTE_ON
+	org H’00’
+	movlw H’00’ ; load w with zeros
+	tris H’06’ ; move w to portb, make output
+
+loop    goto decN   ; start delay
+        movlw H’FF’ ; load w with all ones
+	movwf H’06’ ; move w to port b output
+	goto decN   ; start delay 
+	movlw H’80’ ; load w to light 8th LED
+	movwf H’06’ ; move w to port b output
+	goto decN   ; start delay
+	movlw H’40’ ; load w to light 7th LED
+	movwf H’06’ ; move w to port b output
+	goto decN   ; start delay
+	movlw H’20’ ; load w to light 6th LED
+	movwf H’06’ ; move w to port b output
+	goto decN   ; start delay
+	movlw H’10’ ; load w to light 5th LED
+	movwf H’06’ ; move w to port b output
+	goto decN   ; start delay
+	movlw H’08’ ; load w to light 4th LED
+	movwf H’06’ ; move w to port b output
+	goto decN   ; start delay
+	movlw H’04’ ; load w to light 3rd LED
+	movwf H’06’ ; move w to port b output
+	goto decN   ; start delay
+	movlw H’02’ ; load w to light 2nd LED
+	movwf H’06’ ; move w to port b output
+	goto decN   ; start delay
+	movlw H’01’ ; load w to light 1st LED
+	movwf H’06’ ; move w to port b output
+	goto decN   ; start delay
+	goto loop ; loop again
+
+pause movlw H’FF’ ; move 255 to w
+	movwf H’0E’ ; move w to location 0E
+	return ; exit subroutine
+
+
+loadN movlw H’FF’ ; move 255 to w
+	movwf H’0D’ ; move w to location 0D
+	return ; exit subroutine
+
+decN decfsz H’0D’, 1 ; decrement location 0D
+	goto decN ; if ’0D’ ne 0 then loop
+	decfsz H’0E’, 1 ; else decrement ’0E’
+	goto decN ; if ’0E’ ne 0 then loop
+	goto pause ; reload value of delay1
+	goto loadN ; reload value of delay2
+	
+	return ; exit subroutine

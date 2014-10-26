@@ -1,0 +1,58 @@
+; Sawtooth Wave
+; R.Percival, H. Lively-Cookson, B037, 11May13
+	processor 16F84A
+	INCLUDE "P16F84A.INC"
+	__CONFIG _CP_OFF & _WDT_OFF & _XT_OSC & _PWRTE_ON
+	
+
+	TOADC Equ    PORTB			;set constant DISPPORT = 'PORTB'
+	ADCTRIS Equ    TRISB		;set constant for TRIS register
+
+
+	COUNT Equ H'0F'
+	COUNT2 Equ H'0E'
+	COUNT3	Equ H'0D'
+
+	org H'00'
+   	bsf 	STATUS,		RP0	;select bank 1
+   	movlw 	H'00'			;set PortB, 8 outputs
+   	movwf 	ADCTRIS
+	bcf	STATUS,		RP0		;select bank 0
+	clrf	TOADC			;set all outputs low
+
+    call countset
+	call up
+    call down
+
+wave   movf COUNT, W	  ; moves our count to w
+       movwf TOADC
+	   incf COUNT, 1      ; increments our count by 1
+	   decfsz COUNT2      ; decrement up count
+	   goto wave          ; loops to wave 
+	   goto saw           ; goes to saw if COUNT2 equals 0
+
+saw  decf COUNT, 1        ; decrements COUNT by 1
+     movf COUNT, W        ; move COUNT to w
+	 movwf TOADC          ; move w to ADC
+     decfsz COUNT3        ; decrements down count
+     goto saw             ; loops to saw
+     goto countfix        ; goto to countfix if COUNT3 equals 0
+
+countfix  call up         ; resets up value
+		  call down       ; resets down value
+          goto wave       ; loops to wave
+
+countset  movlw H'00' ; initializes value of COUNT
+	      movwf COUNT 
+	      return      
+
+up      movlw H'10' ; move 16 to w
+	    movwf COUNT2 ; move w to location 0E
+	    return      ; exit subroutine
+
+down    movlw H'08'   ; move 8 to w
+    	movwf COUNT3 ; move w to location 0D
+	    return       ; exit subroutine
+
+
+	end

@@ -1,0 +1,67 @@
+; Triangle Wave
+; R.Percival, H. Lively-Cookson B037, 11May13
+	processor 16F84A
+	INCLUDE "P16F84A.INC"
+	__CONFIG _CP_OFF & _WDT_OFF & _XT_OSC & _PWRTE_ON
+	
+
+	TOADC   Equ    PORTB			;set constant DISPPORT = 'PORTB'
+    ADCTRIS Equ    TRISB		    ;set constant for TRIS register
+   	
+	COUNT1    Equ  H'0F'
+	COUNT2    Equ  H'0C'
+
+	org H'00'
+   	bsf 	STATUS,		RP0	;select bank 1
+   	movlw 	H'00'			;set PortB, 8 outputs
+   	movwf 	ADCTRIS
+	bcf	STATUS,		RP0	;select bank 0
+	clrf	TOADC		;set all outputs low
+
+
+
+
+        call setcount1     ;initialize count values
+        call setcount2
+		call pause  
+ 
+waveup	call decN
+	    movf COUNT1, W     ; moves our count to output
+        movwf TOADC        ; 
+		incfsz COUNT1, 1   ; increments our count by 1, skips next line if COUNT1 ne 0
+		goto waveup        ; loops to waveup
+		goto wavedown      ; when COUNT1 reaches zero move to upwards swing of wave
+
+wavedown  call decN
+	      movf COUNT2, W       ; moves our count to output
+		  movwf TOADC          ;
+	  	  decfsz COUNT2, 1     ; decrements COUNT2 by 1
+	  	  goto wavedown        ; loops to wavedown 
+          goto wavefix         ; goes to subroutine to prepare counts for next cycle
+
+wavefix   decf COUNT2, 1 ; resets COUNT2 to 255 (from 0 by decrementing 1)
+          decf COUNT2, 1 ; decrements again so we dont have repat values on waveform
+	      incf COUNT1, 1 	 ; increments COUNT1 so we dont have repat values on waveform
+          goto waveup    ; loops to waveup
+
+setcount1  movlw H'00'   ; initializes value of COUNT1
+           movwf COUNT1   
+	       return        
+
+setcount2  movlw H'FF'   ; initializes value of COUNT2
+           movwf COUNT2  
+           return         
+
+pause	movlw H'08' ; move 255 to w
+    	movwf H'0D' ; move w to location 0E
+    	return      ; exit subroutine
+
+
+decN    decfsz H'0D', 1     ; decrement location 0D
+	    goto decN       	; if ’0D’ ne 0 then loop
+	    call pause      	; reload value of delay
+	    return          	; exit subroutine
+                     
+
+
+	end

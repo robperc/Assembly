@@ -1,0 +1,432 @@
+; LED Cube, Revision 3
+; R.Percival, H. Lively-Cookson, B037, 11May13
+	processor 16F84A
+	INCLUDE "P16F84A.INC"
+	__CONFIG _CP_OFF & _WDT_OFF & _XT_OSC & _PWRTE_ON
+	
+ 
+	GND	 Equ	PORTA			;set constant GND = 'PORTA'
+	BASEO	 Equ	PORTA			;set constant BASEO = 'PORTA'
+	GNDTRIS	 Equ	TRISA			;set constant for TRIS register
+	BASE     Equ    PORTB		        ;set constant BASE = 'PORTB'
+    	BASETRIS Equ    TRISB		        ;set constant for TRIS register
+
+	GND1 Equ 1    ; Set constants for PORTA outputs
+	GND2 Equ 2    ; P8 overflows from PORTB output
+	GND3 Equ 3    ; so it must go in PORA output
+	P8 Equ 0    
+   	P7 Equ 7      ; Set constants for PORTB output
+	P6 Equ 6      ; These correspond to the nine
+	P5 Equ 5      ; anode "pillars" of the LED cube
+	P4 Equ 4      ; that we can supply voltage to.
+        P3 Equ 3
+	P2 Equ 2
+	P1 Equ 1
+	P0 Equ 0
+
+	org H'00'
+   	bsf 	STATUS,		RP0	;select bank 1
+   	movlw 	H'00'			;set PortA to 8 outputs
+   	movwf 	LEDTRIS
+	bcf	STATUS,		RP0	;select bank 0
+	clrf	LEDPORT			;set all outputs low
+   	
+	bsf 	STATUS,		RP0	;select bank 1
+   	movlw 	H'00'			;set PortB to 8 outputs
+   	movwf 	DISPTRIS
+	bcf	STATUS,		RP0	;select bank 0
+	clrf	DISPPORT		;set all outputs low
+
+	call count1
+	call count2                     ; initialize various counts
+	call pause                      ; to be used later
+	call loadN
+
+loop    call follow
+        call snake1
+	call snake2
+	call updown
+        goto loop
+
+follow  bsf  GND, GND3	 ; turn on the GND for third layer
+	bsf  BASEO, P8   ; lights LED at (2,2,2)
+	call delay
+	bcf  BASEO, P8
+	bsf  BASE, P7    ; lights LED at (1,2,2) 
+	call delay
+	bcf  BASE, P7
+	bsf  BASE, P6    ; lights LED at (0,2,2) 
+	call delay
+	bcf  BASE, P6
+	bsf  BASE, P3    ; lights LED at (0,1,2)	 
+	call delay
+	bcf  BASE, P3
+	bsf  BASE, P0    ; lights LED at (0,0,2)	 
+	call delay
+	bcf  BASE, P0
+	bsf  BASE, P1    ; lights LED at (1,0,2)	 
+	call delay
+	bcf  BASE, P1
+	bsf  BASE, P2    ; lights LED at (2,0,2) 
+	call delay
+	bcf  BASE, P2
+	bsf  BASE, P5    ; lights LED at (2,1,2)	 
+	call delay
+	bcf  BASE, P5
+	bcf  GND, GND3   ; turns off GND for third layer
+
+
+	                 ; Start the second layer
+
+
+	bsf  GND, GND2	 ; turn on the GND for second layer
+	bsf  BASEO, P8   ; lights LED at (2,2,1)
+	call delay
+	bcf  BASEO, P8
+	bsf  BASE, P7    ; lights LED at (1,2,1) 
+	call delay
+	bcf  BASE, P7
+	bsf  BASE, P6    ; lights LED at (0,2,1) 
+	call delay
+	bcf  BASE, P6 
+	bsf  BASE, P3    ; lights LED at (0,1,1)	 
+	call delay
+	bcf  BASE, P3
+	bsf  BASE, P0    ; lights LED at (0,0,1)	 
+	call delay
+	bcf  BASE, P0
+	bsf  BASE, P1    ; lights LED at (1,0,1)	 
+	call delay
+	bcf  BASE, P1
+	bsf  BASE, P2    ; lights LED at (2,0,1) 
+	call delay
+	bcf  BASE, P2
+	bsf  BASE, P5    ; lights LED at (2,1,1)	 
+	call delay
+	bcf  BASE, P5
+	bcf  GND, GND2   ; turns off GND for second layer
+
+
+	                 ; Start the first layer
+
+
+	bsf  GND, GND1	 ; turn on the GND for first layer
+	bsf  BASEO, P8   ; lights LED at (2,2,0)
+	call delay
+	bcf  BASEO, P8
+	bsf  BASE, P7    ; lights LED at (1,2,0) 
+	call delay
+	bcf  BASE, P7
+	bsf  BASE, P6    ; lights LED at (0,2,0) 
+	call delay
+	bcf  BASE, P6
+	bsf  BASE, P3    ; lights LED at (0,1,0)	 
+	call delay
+	bcf  BASE, P3
+	bsf  BASE, P0    ; lights LED at (0,0,0)	 
+	call delay
+	bcf  BASE, P0
+	bsf  BASE, P1    ; lights LED at (1,0,0)	 
+	call delay
+	bcf  BASE, P1
+	bsf  BASE, P2    ; lights LED at (2,0,0) 
+	call delay
+	bcf  BASE, P2
+	bsf  BASE, P5    ; lights LED at (2,1,0)	 
+	call delay
+	bcf  BASE, P5
+	
+	bsf  BASE, P4    ; lights LED at (1,1,0)	 
+	call delay
+	bcf  BASE, P4
+	bcf  GND, GND1   ; turns off GND for first layer
+	
+	bsf  GND, GND2	 ; turn on the GND for second layer
+	bsf  BASE, P4    ; lights LED at (1,1,1)
+	call delay
+	bcf  BASE, P4
+	bcf GND, GND2    ; turns off GND for second layer
+	
+	bsf  GND, GND3	 ; turn on the GND for third layer
+	bsf  BASE, P4    ; lights LED at (1,1,2)
+	call delay
+	bcf  BASE, P4
+	bcf  GND, GND3   ; turns off GND for third layer
+
+	decfsz H'0F', 1  ; loops through follow subroutine 5 times
+	goto follow	 ; then reloads count1 value and
+	call count1      ; returns to loop.
+	return           ; exits subroutine
+
+snake1  bsf  GND, GND3	 ; turn on the GND for third layer
+	bsf  BASEO, P8   ; lights LED at (2,2,2)
+	call delay
+	bcf  BASEO, P8
+	bsf  BASE, P7    ; lights LED at (1,2,2) 
+	call delay
+	bcf  BASE, P7
+	bsf  BASE, P6    ; lights LED at (0,2,2) 
+	call delay
+	bcf  GND, GND3   ; turns off GND for third layer
+
+
+	bsf  GND, GND2	 ; turn on the GND for second layer
+	call delay       ; lights LED at (0,2,1) 
+	bcf  GND, GND2   ; turns off GND for second layer
+
+
+	bsf  GND, GND1	 ; turn on the GND for first layer
+	call delay       ; lights LED at (0,2,0) 
+	bcf BASE, P6
+	bsf  BASE, P3    ; lights LED at (0,1,0)	 
+	call delay
+	bcf  BASE, P3
+	bsf  BASE, P0    ; lights LED at (0,0,0)	 
+	call delay
+	bcf  GND, GND1   ; turns off GND for first layer
+
+	
+	bsf  GND, GND2	 ; turn on the GND for second layer
+	call delay       ; lights LED at (0,0,1) 
+	bcf  GND, GND2   ; turns off GND for second layer
+
+	
+	bsf  GND, GND3	 ; turn on the GND for third layer
+	call delay       ; lights LED at (0,0,2)
+	bcf  BASE, P0
+	bsf  BASE, P1    ; lights LED at (1,0,2) 
+	call delay
+	bcf  BASE, P1
+	bsf  BASE, P2    ; lights LED at (2,0,2) 
+	call delay
+	bcf  GND, GND3   ; turns off GND for third layer
+
+	
+	bsf  GND, GND2	 ; turn on the GND for second layer
+	call delay       ; lights LED at (2,0,1) 
+	bcf  GND, GND2   ; turns off GND for second layer
+
+
+	bsf  GND, GND1	 ; turn on the GND for first layer
+	call delay       ; lights LED at (2,0,0) 
+	bcf BASE, P2
+	bsf  BASE, P5    ; lights LED at (2,1,0)	 
+	call delay
+	bcf  BASE, P5
+	bsf  BASEO, P8    ; lights LED at (2,2,0)	 
+	call delay
+	bcf  GND, GND1   ; turns off GND for first layer
+
+	
+	bsf  GND, GND2	 ; turn on the GND for second layer
+	call delay       ; lights LED at (2,2,1) 
+	bcf BASEO, P8
+	bcf  GND, GND2   ; turns off GND for second layer
+	
+	decfsz H'0F', 1  ; loops through snake1 subroutine 5 times
+	goto snake1	 ; then reloads count1 value and
+	call count1      ; returns to loop.
+	return           ; exits subroutine
+
+snake2  bsf  GND, GND3	 ; turn on the GND for third layer
+	bsf  BASEO, P8   ; lights LED at (2,2,2)
+	call delay
+	bcf  BASEO, P8
+	bsf  BASE, P7    ; lights LED at (1,2,2) 
+	call delay
+	bcf  BASE, P7
+	bsf  BASE, P6    ; lights LED at (0,2,2) 
+	call delay
+	bcf  BASE, P6
+	bcf  GND, GND3   ; turns off GND for third layer
+
+
+	bsf  GND, GND2	 ; turn on the GND for second layer
+	bsf  BASE, P4
+	call delay       ; lights LED at (1,1,1) 
+	bcf  BASE, P4
+	bcf  GND, GND2   ; turns off GND for second layer
+
+
+	bsf  GND, GND1	 ; turn on the GND for first layer
+	bsf BASE, P2	 ; lights LED at (2,0,0)
+	call delay       
+	bcf BASE, P2
+	bsf  BASE, P5    ; lights LED at (2,1,0)	 
+	call delay
+	bcf  BASE, P5
+	bsf  BASEO, P8    ; lights LED at (2,2,0)	 
+	call delay
+	bcf  BASEO, P8
+	bcf  GND, GND1   ; turns off GND for first layer
+
+	
+	bsf  GND, GND2	 ; turn on the GND for second layer
+	bsf  BASE, P4
+	call delay       ; lights LED at (1,1,1) 
+	bcf  BASE, P4
+	bcf  GND, GND2   ; turns off GND for second layer
+
+
+	bsf  GND, GND3	 ; turn on the GND for third layer
+	bsf  BASE, P0	 ; lights LED at (0,0,2)
+	call delay       
+	bcf  BASE, P0
+	bsf  BASE, P1    ; lights LED at (1,0,2) 
+	call delay
+	bcf  BASE, P1
+	bsf  BASE, P2    ; lights LED at (2,0,2) 
+	call delay
+	bcf  BASE, P2
+	bcf  GND, GND3   ; turns off GND for third layer
+
+
+	bsf  GND, GND2	 ; turn on the GND for second layer
+	bsf  BASE, P4
+	call delay       ; lights LED at (1,1,1) 
+	bcf  BASE, P4
+	bcf  GND, GND2   ; turns off GND for second layer
+
+
+	bsf  GND, GND1	 ; turn on the GND for first layer
+	bsf  BASE, P6    ; lights LED at (0,2,0) 
+	call delay       
+	bcf  BASE, P6
+	bsf  BASE, P3    ; lights LED at (0,1,0)	 
+	call delay
+	bcf  BASE, P3
+	bsf  BASE, P0    ; lights LED at (0,0,0)	 
+	call delay
+	bcf  BASE, P0
+	bcf  GND, GND1   ; turns off GND for first layer
+
+	
+	bsf  GND, GND2	 ; turn on the GND for second layer
+	bsf  BASE, P4
+	call delay       ; lights LED at (1,1,1) 
+	bcf  BASE, P4
+	bcf  GND, GND2   ; turns off GND for second layer
+
+	
+	decfsz H'0F', 1  ; loops through snake1 subroutine 5 times
+	goto snake2	 ; then reloads count1 value and
+	call count1      ; returns to loop.
+	return           ; exits subroutine
+
+updown  bsf  GND, GND3	 ; turn on the GND for third layer
+	bsf  BASEO, P8   ; lights top layer of LEDs along edge
+	bsf  BASE, P7   
+	bsf  BASE, P6  
+	bsf  BASE, P3  
+	bsf  BASE, P0  
+	bsf  BASE, P1  
+	bsf  BASE, P2  
+	bsf  BASE, P5  
+	call delay
+	bcf  BASEO, P8
+	bcf  BASE, P7
+	bcf  BASE, P6
+	bcf  BASE, P3
+	bcf  BASE, P0
+	bcf  BASE, P1
+	bcf  BASE, P2
+	bcf  BASE, P5
+	bcf  GND, GND3   ; turns off GND for third layer
+
+
+	                 ; Start the second layer
+
+
+	bsf  GND, GND2	 ; turn on the GND for second layer
+	bsf  BASEO, P8   ; lights middle layer of LEDs along edge
+	bsf  BASE, P7   
+	bsf  BASE, P6  
+	bsf  BASE, P3  
+	bsf  BASE, P0  
+	bsf  BASE, P1  
+	bsf  BASE, P2  
+	bsf  BASE, P5  
+	call delay
+	bcf  BASEO, P8
+	bcf  BASE, P7
+	bcf  BASE, P6
+	bcf  BASE, P3
+	bcf  BASE, P0
+	bcf  BASE, P1
+	bcf  BASE, P2
+	bcf  BASE, P5
+	bcf  GND, GND2   ; turns off GND for second layer
+
+
+	                 ; Start the first layer
+
+
+	bsf  GND, GND1	 ; turn on the GND for first layer
+	bsf  BASEO, P8   ; lights bottom layer of LEDs along edge
+	bsf  BASE, P7   
+	bsf  BASE, P6  
+	bsf  BASE, P3  
+	bsf  BASE, P0  
+	bsf  BASE, P1  
+	bsf  BASE, P2  
+	bsf  BASE, P5  
+	call delay
+	bcf  BASEO, P8
+	bcf  BASE, P7
+	bcf  BASE, P6
+	bcf  BASE, P3
+	bcf  BASE, P0
+	bcf  BASE, P1
+	bcf  BASE, P2
+	bcf  BASE, P5
+	
+	bsf BASE, P4     ; lights middle LED on bottom layer
+	bcf  GND, GND1   ; turns off GND for first layer
+	
+	bsf  GND, GND2	 ; turn on the GND for second layer
+	call delay       ; lights middle LED on middle layer
+	bcf GND, GND2    ; turns off GND for second layer
+	
+	bsf  GND, GND3	 ; turn on the GND for third layer
+	call delay	 ; lights middle LED on top layer
+	bcf  BASE, P4
+	bcf  GND, GND3   ; turns off GND for third layer
+
+	decfsz H'0F', 1  ; loops through updown subroutine 5 times
+	goto updown	 ; then reloads count1 value and
+	call count1      ; returns to loop.
+	return           ; exits subroutine
+	
+
+
+count1   movlw H'05' ; move 10 to w
+	 movwf H'0F' ; move w to location 0E
+	 return      ; exit subroutine
+
+count2   movlw H'1E' ; move 10 to w
+	 movwf H'0B' ; move w to location 0E
+	 return      ; exit subroutine
+
+
+pause   movlw H'FF' ; move 255 to w
+	movwf H'0E' ; move w to location 0E
+	return      ; exit subroutine
+
+loadN   movlw H'FF' ; move 255 to w
+	movwf H'0D' ; move w to location 0D
+	return      ; exit subroutine
+
+delay	decfsz H'0D', 1 ; decrement location 0D
+	goto delay      ; if ’0D’ ne 0 then loop
+	decfsz H'0E', 1 ; else decrement ’0E’
+	goto delay       ; if ’0E’ ne 0 then loop
+	call pause      ; reload value of delay1
+	call loadN      ; reload value of delay2
+	return          ; exit subroutine
+
+
+
+
+
+
+	end

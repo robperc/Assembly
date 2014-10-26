@@ -1,0 +1,39 @@
+; Sawtooth Wave
+; R.Percival, H. Lively-Cookson, B037, 11May13
+	processor 16F84A
+	INCLUDE "P16F84A.INC"
+	__CONFIG _CP_OFF & _WDT_OFF & _XT_OSC & _PWRTE_ON
+	
+
+TOADC Equ    PORTB			;set constant DISPPORT = 'PORTB'
+ADCTRIS Equ    TRISB		;set constant for TRIS register
+
+
+COUNT Equ H'0F'
+   	
+
+	org H'00'
+   	bsf 	STATUS,		RP0	;select bank 1
+   	movlw 	H'00'			;set PortB, 8 outputs
+   	movwf 	ADCTRIS
+	bcf	STATUS,		RP0		;select bank 0
+	clrf	TOADC			;set all outputs low
+
+    call countset
+	   
+
+wave movf COUNT, W		; moves our count to w
+	movwf TOADC
+	decfsz COUNT, 1      ; increments our count by 1
+	goto wave          ; loops to wave 
+	call countset
+	goto wave 
+
+countset  movlw H'FF' ; initializes value of COUNT
+	  movwf COUNT 
+	  return      
+
+
+
+
+	end
